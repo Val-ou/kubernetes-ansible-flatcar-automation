@@ -7,7 +7,6 @@ spec:
   addresses:
   - {{ loadBalancerSubnet }}
 ---
-{% for item in cluster_BGP_peers %}
 apiVersion: metallb.io/v1beta2
 kind: BGPPeer
 metadata:
@@ -18,7 +17,6 @@ spec:
   peerASN: {{ item.ASN}}
   peerAddress: {{ item.address }}
 ---
-{% endfor %}
 apiVersion: metallb.io/v1beta1
 kind: BGPAdvertisement
 metadata:

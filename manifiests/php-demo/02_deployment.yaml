@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-index-php
+data:
+  index.php: |-
+    {{ .Files.Get "index.php" | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app-deployment
+  namespace: sample-app
+  labels:
+    app: sample-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+    spec:
+      containers:
+      - name: sampleapp
+        image: php:8-apache
+        ports:
+        - name: http
+          containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 500m
+            memory: 100M
+          limits:
+            cpu: 1000m
+            memory: 200M
+        volumeMounts:
+        - name: index-php
+          mountPath: /var/www/index.php
+          subPath: index.php
+      volumes:
+        - name: index-php
+          configMap:
+            name: demo-index-php
