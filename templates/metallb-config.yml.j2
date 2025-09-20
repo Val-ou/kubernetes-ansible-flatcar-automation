@@ -1,0 +1,26 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - {{ loadBalancerSubnet }}
+---
+{% for item in cluster_BGP_peers %}
+apiVersion: metallb.io/v1beta2
+kind: BGPPeer
+metadata:
+  name: {{ item.name }}
+  namespace: metallb-system
+spec:
+  myASN: {{ cluster_BGP_ASN }}
+  peerASN: {{ item.ASN}}
+  peerAddress: {{ item.address }}
+---
+{% endfor %}
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: advertisement
+  namespace: metallb-system

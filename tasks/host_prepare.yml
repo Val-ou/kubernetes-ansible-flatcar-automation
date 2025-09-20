@@ -1,0 +1,17 @@
+- name: Copy files to nodes # noqa: command-instead-of-module
+  ansible.builtin.command:
+    rsync -a -e ssh .temp {{ ansible_user }}@{{ ansible_host }}:~/
+  delegate_to: localhost
+  changed_when: true
+
+- name: Install kubectl and kubeadm
+  ansible.builtin.script: scripts/install_kctl_kadm.sh
+  changed_when: true
+
+- name: Install kubelet
+  ansible.builtin.script: scripts/kubelet.sh
+  changed_when: true
+
+- name: Add host to /etc/hosts
+  ansible.builtin.script: scripts/hostfile.sh {{ ansible_host }} {{ inventory_hostname }}
+  changed_when: true

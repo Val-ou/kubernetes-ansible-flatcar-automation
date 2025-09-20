@@ -1,0 +1,93 @@
+- name: "Bootstrap cluster"
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  strategy: linear
+  tasks:
+    - name: Disable automatic updates and reboot
+      ansible.builtin.raw: systemctl disable --now locksmithd.service
+      changed_when: false
+
+    - name: Import file preparation task # noqa: run-once[task]
+      ansible.builtin.import_tasks:
+        tasks/file_prepare.yml
+      delegate_to: localhost
+      run_once: true
+
+    - name: Import detemine cluster nodes
+      ansible.builtin.import_tasks:
+        tasks/detemine_cluster_nodes.yml
+
+    - name: Import host preparation tasks
+      ansible.builtin.import_tasks:
+        tasks/host_prepare.yml
+
+    - name: Import kube-vip
+      ansible.builtin.import_tasks:
+        tasks/kube_vip.yml
+      when: "'kubernetes-control-plane' in group_names and not kubernetes_in_cluster"
+
+    - name: Apply patch on kube-vip config, see github.com/kube-vip/kube-vip/issues/684  # noqa: run-once[task]
+      ansible.builtin.raw: "sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml"
+      when: kubernetes_init_node and not kubernetes_in_cluster
+      changed_when: true
+      run_once: true
+
+    - name: Import cluster init tasks # noqa: run-once[task]
+      ansible.builtin.import_tasks:
+        tasks/cluster_init.yml
+      when: kubernetes_init_node and not kubernetes_in_cluster
+      run_once: true
+
+    - name: Revert patch on kube-vip config # noqa: run-once[task]
+      ansible.builtin.raw: "sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml"
+      when: kubernetes_init_node and not kubernetes_in_cluster
+      changed_when: true
+      run_once: true
+
+    - name: Wait until kube-vip is back online and the kube api is accesible # noqa: run-once[task]
+      ansible.builtin.wait_for:
+        host: "{{ controlPlaneEndpoint }}"
+        port: 6443
+        delay: 5
+        sleep: 1
+        timeout: 300 # 5min
+      when: kubernetes_init_node and not kubernetes_in_cluster
+      delegate_to: localhost
+      run_once: true
+
+    - name: Get join command # noqa: run-once[task]
+      ansible.builtin.raw: kubeadm token create --print-join-command --ttl 1h
+      when: kubernetes_init_node
+      run_once: true
+      changed_when: true
+      register: get_join_command
+
+    - name: Set fact for all, join command # noqa: run-once[task]
+      ansible.builtin.set_fact:
+        kubernetes_joint_command: "{{ get_join_command.stdout | trim }}"
+      when: kubernetes_init_node
+      run_once: true
+
+    - name: Import tasks to copy certs
+      ansible.builtin.import_tasks: tasks/copy_certs.yml
+
+    - name: Join control plain nodes
+      ansible.builtin.raw: "{{ kubernetes_joint_command }} --control-plane"
+      when: >
+        (kubernetes_init_node is not defined or kubernetes_init_node is not true)
+        and 'kubernetes-control-plane' in group_names
+        and not kubernetes_in_cluster
+      throttle: 1
+      changed_when: true
+
+    - name: Join worker nodes
+      ansible.builtin.raw: "{{ kubernetes_joint_command }}"
+      when: "'kubernetes-worker-nodes' in group_names and not kubernetes_in_cluster"
+      throttle: 1
+      changed_when: true
+
+    - name: Import manifests # noqa: run-once[task]
+      ansible.builtin.import_tasks:
+        tasks/manifests.yml
+      when: kubernetes_init_node
+      run_once: true

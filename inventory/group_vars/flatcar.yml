@@ -1,0 +1,3 @@
+ansible_user: core
+ansible_become: true
+proxmox_templateid: 901

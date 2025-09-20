@@ -1,0 +1,8 @@
+- name: "Bootstrap cluster"
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  strategy: linear
+  tasks:
+    - name: Call kubeadm reset
+      ansible.builtin.raw: "kubeadm reset --force"
+      changed_when: true

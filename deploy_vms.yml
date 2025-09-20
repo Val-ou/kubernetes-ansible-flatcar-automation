@@ -1,0 +1,29 @@
+- name: "Bootstrap cluster"
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  strategy: linear
+  tasks:
+    - name: Check for VM existence
+      ansible.builtin.raw: qm status {{ proxmox_vmid }}
+      delegate_to: pve
+      throttle: 1
+      ignore_errors: true
+      changed_when: false
+      register: proxmox_vm_status
+
+    - name: Set fact, does the vm exist
+      ansible.builtin.set_fact:
+        proxmox_vm_exist: "{{ proxmox_vm_status.rc == 0 }}"
+
+    - name: Call VM provision
+      ansible.builtin.script: scripts/proxmox_vm_provision.sh {{ proxmox_templateid }} {{ proxmox_vmid }} {{ inventory_hostname }} {{ ansible_host }}
+      delegate_to: pve
+      throttle: 1
+      when: not proxmox_vm_exist
+      changed_when: true
+
+    - name: Start VM
+      ansible.builtin.raw: qm start {{ proxmox_vmid }}
+      delegate_to: pve
+      throttle: 1
+      changed_when: true

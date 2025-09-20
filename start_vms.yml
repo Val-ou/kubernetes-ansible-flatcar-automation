@@ -1,0 +1,11 @@
+- name: "Bootstrap cluster"
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  strategy: linear
+#  serial: 1
+  tasks:
+    - name: Start VM
+      ansible.builtin.raw: qm start {{ proxmox_vmid }}
+      delegate_to: pve
+      throttle: 1
+      changed_when: true

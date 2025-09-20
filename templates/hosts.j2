@@ -1,0 +1,12 @@
+# /etc/hosts: Local Host Database
+#
+# WARNING: This file is managed using kubernetes
+#
+
+127.0.0.1       localhost
+::1             localhost
+
+# Kubernetes cluster hosts
+{% for host in ansible_play_hosts %}
+{{ host }}    {{ hostvars[host].ansible_default_ipv4.address }}
+{% endfor %}

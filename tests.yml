@@ -1,0 +1,56 @@
+- name: "Bootstrap cluster"
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  strategy: linear
+  tasks:
+    - name: Determine cluster nodes using Kubectl # noqa: run-once[task]
+      ansible.builtin.raw: /opt/bin/kubectl get nodes -o json
+      when: kubernetes_init_node
+      run_once: true
+      changed_when: false
+      register: determine_k8s_nodes
+      ignore_errors: true
+      become: true
+      become_user: core
+
+    - name: Extract node names # noqa: run-once[task]
+      ansible.builtin.set_fact:
+        kubernetes_cluster_nodes: "{{ determine_k8s_nodes.stdout | from_json | json_query('items[].metadata.name') }}"
+      when: determine_k8s_nodes.rc == 0
+      run_once: true
+
+    - name: Dummy node names if the cluster is not initalized # noqa: run-once[task]
+      ansible.builtin.set_fact:
+        kubernetes_cluster_nodes: ""
+      when: determine_k8s_nodes.rc != 0
+      run_once: true
+
+    - name: Set fact, host is in cluster
+      ansible.builtin.set_fact:
+        kubernetes_in_cluster: "{{ inventory_hostname in kubernetes_cluster_nodes }}"
+
+    - name: Debug
+      ansible.builtin.debug:
+        var: kubernetes_in_cluster
+
+#    - name: Set fact for all, join command # noqa: run-once[task]
+#      ansible.builtin.set_fact:
+#        kubernetes_joint_command: "{{ get_join_command.stdout | trim }}"
+#      when: kubernetes_init_node
+#      run_once: true
+
+#    - name: Set fact for all
+#      run_once: true
+#      ansible.builtin.set_fact:
+#        k8s_joint_command: "{{ join_command.stdout }}"
+#      when: bootstrap_node
+
+#    - name: Print join cluster
+#      ansible.builtin.debug:
+#        msg: "{{ kubernetes_joint_command }}"
+#      when: kubernetes_init_node is not defined or kubernetes_init_node is not true
+
+#    - name: "Debug"
+#      delegate_to: localhost
+#      ansible.builtin.debug:
+#        msg: "{{ hostvars[groups[group_names[0]][0]] }}"

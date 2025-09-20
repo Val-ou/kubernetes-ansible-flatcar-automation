@@ -1,0 +1,23 @@
+- name: Apply kuberouter manifest # noqa: run-once[task]
+  ansible.builtin.raw: /opt/bin/kubectl apply -f /home/core/.temp/kuberouter.yml
+  changed_when: true
+  become: true
+  become_user: core
+
+- name: Apply metallb install manifest # noqa: run-once[task]
+  ansible.builtin.raw: /opt/bin/kubectl apply -f /home/core/.temp/metallb-native.yaml
+  changed_when: true
+  become: true
+  become_user: core
+
+- name: Wait for metallb to be ready (5m)
+  ansible.builtin.raw: /opt/bin/kubectl rollout status deployment/controller -n metallb-system --timeout=300s
+  changed_when: false
+  become: true
+  become_user: core
+
+- name: Apply metallb config manifest # noqa: run-once[task]
+  ansible.builtin.raw: /opt/bin/kubectl apply -f /home/core/.temp/metallb-config.yml
+  changed_when: true
+  become: true
+  become_user: core

@@ -1,0 +1,44 @@
+- name: Create cache folder
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "./.temp/"
+    state: directory
+    mode: "0755"
+
+- name: Download Kubernetes binaries
+  delegate_to: localhost
+  ansible.builtin.get_url:
+    url: "https://dl.k8s.io/{{ kubernetes_version }}/bin/linux/amd64/{{ item }}"
+    dest: "./.temp/{{ item }}"
+    mode: "0755"
+  loop:
+    - kubectl
+    - kubeadm
+    - kubelet
+
+- name: Generate kubeadm config
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: templates/kubeadm.yml.j2
+    dest: .temp/kubeadm.yml
+    mode: "0644"
+
+- name: Generate metallb config
+  delegate_to: localhost
+  ansible.builtin.template:
+    src: templates/metallb-config.yml.j2
+    dest: .temp/metallb-config.yml
+    mode: "0644"
+
+- name: Copy other config files
+  delegate_to: localhost
+  ansible.builtin.copy:
+    src: templates/{{ item }}
+    dest: .temp/{{ item }}
+    mode: "0644"
+  loop:
+    - kubelet.service
+    - 10-kubeadm.conf
+    - 20-flatcar.conf
+    - kuberouter.yml
+    - metallb-native.yaml

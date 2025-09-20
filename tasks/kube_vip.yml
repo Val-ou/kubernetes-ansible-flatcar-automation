@@ -1,0 +1,32 @@
+- name: Create kubelet manifests directory
+  ansible.builtin.raw: "mkdir -p /etc/kubernetes/manifests"
+  changed_when: true
+
+- name: Pull kube-vip image
+  ansible.builtin.raw: >
+    ctr image pull ghcr.io/kube-vip/kube-vip:v1.0.0
+  changed_when: true
+
+- name: Create kube-vip manifest
+  ansible.builtin.raw: >
+    ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:v1.0.0 vip /kube-vip manifest pod \
+      --address {{ controlPlaneEndpoint }} \
+      --interface eth0 \
+      --controlplane \
+      --arp \
+      --leaderElection \
+      | tee /etc/kubernetes/manifests/kube-vip.yaml
+#      --enableLoadBalancer \
+#      --lbPort 6443 \
+#      --lbForwardingMethod local \
+#      --leaderElection \
+#      --log 5 \
+#  register: kube_vip_manifest
+  changed_when: true
+
+# - name: Write kube-vip manifest
+#   ansible.builtin.raw: >
+#     tee << EOF /etc/kubernetes/manifests/kube-vip.yaml
+#     {{ kube_vip_manifest.stdout }}
+#     EOF
+#   changed_when: true
