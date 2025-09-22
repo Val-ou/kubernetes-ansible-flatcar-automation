@@ -1,6 +1,6 @@
-# Automatisation du déploiement de Kuberentes sur Flatcar container Linux
+# Automatisation du déploiement de Kubernetes sur Flatcar container Linux
 
-Dépôt pour un ensembles de script, manifests et test pour l'automatisation et l'exploitation d'un cluster Kuberentes.
+Dépôt pour un ensembles de script, manifests et test pour l'automatisation et l'exploitation d'un cluster Kubernetes.
 
 Les technologies employées sont :
 - Distribution : Flatcar container Linux
@@ -13,7 +13,7 @@ Les technologies employées sont :
 - [x] Déploiment du cluster
 - [x] Haute disponiblité
 - [x] Load balancer
-- [ ] Mise à jours de Kuberentes
+- [ ] Mise à jours de Kubernetes
 - [ ] Ingress / Gateway API (Istio / service mesh ?)
 - [ ] Monitoring
 - [ ] Storage provider
