@@ -1,5 +1,5 @@
 - name: "Bootstrap cluster"
-  hosts: "{{ target | default('none') }}"
+  hosts: "{{ target | default('cluster') }}"
   gather_facts: false
   strategy: linear
   tasks:

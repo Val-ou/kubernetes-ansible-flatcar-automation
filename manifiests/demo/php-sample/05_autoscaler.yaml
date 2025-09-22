@@ -2,7 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: sample-app-autoscaler
-  namespace: sample-app
+  namespace: php-sample
   labels:
     app: sample-app
 spec:

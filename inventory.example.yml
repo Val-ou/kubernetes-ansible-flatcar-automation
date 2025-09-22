@@ -1,0 +1,40 @@
+all:
+  hosts:
+    kube1:
+      ansible_host: 172.16.2.1
+      kubernetes_init_node: true
+    kube2:
+      ansible_host: 172.16.2.2
+    kube3:
+      ansible_host: 172.16.2.3
+    kube4:
+      ansible_host: 172.16.2.4
+    kube5:
+      ansible_host: 172.16.2.5
+
+kubernetes-control-plane:
+  hosts:
+    kube1:
+    kube2:
+    kube3:
+
+kubernetes-worker-nodes:
+  hosts:
+    kube4:
+    kube5:
+
+cluster:
+  hosts:
+    kube1:
+    kube2:
+    kube3:
+    kube4:
+    kube5:
+  vars:
+    ansible_user: core
+    ansible_become: true
+    dnsDomain: cluster2.internal
+    serviceSubnet: 10.2.0.0/17
+    podSubnet: 10.2.128.0/17
+    kubernetes_version: "v1.33.2"
+    controlPlaneEndpoint: "172.16.2.254"

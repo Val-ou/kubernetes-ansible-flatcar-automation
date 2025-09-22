@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sample-app-service
-  namespace: sample-app
+  name: php-sample-service
+  namespace: php-sample
   labels:
-    app: sample-app
+    app: php-sample
 spec:
   selector:
-    app: sample-app
+    app: php-sample
   ports:
     - protocol: TCP
       port: 80

@@ -23,13 +23,6 @@
     dest: .temp/kubeadm.yml
     mode: "0644"
 
-- name: Generate metallb config
-  delegate_to: localhost
-  ansible.builtin.template:
-    src: templates/metallb-config.yml.j2
-    dest: .temp/metallb-config.yml
-    mode: "0644"
-
 - name: Copy other config files
   delegate_to: localhost
   ansible.builtin.copy:
